@@ -1,11 +1,12 @@
 const routes = require('express').Router()
 const movieControllers = require('../controllers/movies')
 const upload = require('../helpers/upload')
+const authMiddleware = require('../middlewares/auth')
 
 routes.get('/', movieControllers.listMovies)
 routes.get('/:id', movieControllers.detailMovies)
-routes.post('/', upload, movieControllers.createMovies)
-routes.delete('/:id', movieControllers.deleteMovie)
-routes.patch('/:id', upload, movieControllers.updateMovie)
+routes.post('/', authMiddleware.authCheck, authMiddleware.isAdmin, upload, movieControllers.createMovies)
+routes.delete('/:id', authMiddleware.authCheck, authMiddleware.isAdmin, movieControllers.deleteMovie)
+routes.patch('/:id', authMiddleware.authCheck, authMiddleware.isAdmin, upload, movieControllers.updateMovie)
 
 module.exports = routes

@@ -6,7 +6,7 @@ exports.getGenreByCondition = (cond) => {
     SELECT * FROM
     genre WHERE name LIKE "%${cond.search}%"
     ORDER BY ${cond.sort} ${cond.order}
-    LIMIT ${cond.dataLimit} OFFSET ${cond.offset}
+    LIMIT ${cond.limit} OFFSET ${cond.offset}
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
@@ -20,6 +20,19 @@ exports.getCountGenre = () => {
       if (err) reject(err)
       resolve(res[0].total_genre)
     })
+  })
+}
+
+exports.getCountGenreCondition = (cond) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`SELECT COUNT(name) as totalData FROM
+    genre WHERE name LIKE "%${cond.search}%"
+    GROUP BY name
+    ORDER BY ${cond.sort} ${cond.order}`, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
   })
 }
 

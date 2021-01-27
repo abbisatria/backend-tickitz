@@ -17,8 +17,7 @@ module.exports = {
       name: Joi.string().min(3).required(),
       location: Joi.string().min(3).required(),
       address: Joi.string().min(3).required(),
-      price: Joi.required(),
-      showtime: Joi.required()
+      price: Joi.required()
     })
     return schema.validate(cinema)
   },
@@ -27,5 +26,20 @@ module.exports = {
       name: Joi.string().min(3).required()
     })
     return schema.validate(genre)
+  },
+  validationUser: (user) => {
+    const schema = Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().min(3).required()
+    })
+    return schema.validate(user)
+  },
+  validationShowtime: (showtime) => {
+    const schema = Joi.object({
+      showtime: Joi.required(),
+      idMovie: Joi.required(),
+      idCinema: Joi.required()
+    })
+    return schema.validate(showtime)
   }
 }

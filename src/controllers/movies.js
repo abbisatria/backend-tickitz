@@ -3,6 +3,8 @@ const movieModel = require('../models/movies')
 const genreModel = require('../models/genre')
 const movieGenreModel = require('../models/movieGenres')
 const validation = require('../helpers/validation')
+const response = require('../helpers/response')
+const qs = require('querystring')
 const fs = require('fs')
 
 exports.listMovies = async (req, res) => {
@@ -11,33 +13,39 @@ exports.listMovies = async (req, res) => {
     cond.search = cond.search || ''
     cond.page = Number(cond.page) || 1
     cond.limit = Number(cond.limit) || 5
-    cond.dataLimit = cond.limit
     cond.offset = (cond.page * cond.limit) - cond.limit
     cond.sort = cond.sort || 'id'
     cond.order = cond.order || 'ASC'
 
     const results = await movieModel.getMoviesByCondition(cond)
 
-    const totalData = await movieModel.getCountMovies()
+    let totalPage
+    let totalData
 
-    const totalPage = Math.ceil(Number(totalData) / cond.limit)
-    return res.status(200).json({
-      success: true,
-      message: 'List of all Movies',
+    if (cond.search) {
+      totalData = await movieModel.getCountMovieCondition(cond)
+      totalPage = Math.ceil(Number(totalData.length) / cond.limit)
+    } else {
+      totalData = await movieModel.getCountMovies()
+      totalPage = Math.ceil(Number(totalData) / cond.limit)
+    }
+
+    return response(
+      res,
+      200,
+      true,
+      'List of all Movies',
       results,
-      pageInfo: {
+      {
         totalData: results.length,
         currentPage: cond.page,
         totalPage,
-        nextLink: cond.page < totalPage ? `${APP_URL}movies?page=${cond.page + 1}` : null,
-        prevLink: cond.page > 1 ? `${APP_URL}movies?page=${cond.page - 1}` : null
+        nextLink: cond.page < totalPage ? `${APP_URL}movies?${qs.stringify({ ...req.query, ...{ page: cond.page + 1 } })}` : null,
+        prevLink: cond.page > 1 ? `${APP_URL}movies?${qs.stringify({ ...req.query, ...{ page: cond.page - 1 } })}` : null
       }
-    })
+    )
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -45,10 +53,7 @@ exports.createMovies = async (req, res) => {
   const valid = validation.validationMovie(req.body)
 
   if (valid.error) {
-    return res.status(400).json({
-      success: false,
-      message: valid.error.details[0].message
-    })
+    return response(res, 400, false, valid.error.details[0].message)
   }
 
   try {
@@ -68,10 +73,7 @@ exports.createMovies = async (req, res) => {
       const results = await genreModel.checkGenres(idGenre)
       console.log(results)
       if (results.length !== idGenre.length) {
-        return res.status(404).json({
-          success: false,
-          message: 'Some genre are unavailable'
-        })
+        return response(res, 400, false, 'Some genre are unavailable')
       } else {
         results.forEach(item => {
           selectedGenre.push(item.id)
@@ -80,10 +82,7 @@ exports.createMovies = async (req, res) => {
     } else if (typeof idGenre === 'string') {
       const results = await genreModel.checkGenres([idGenre])
       if (results.length !== idGenre.length) {
-        return res.status(404).json({
-          success: false,
-          message: 'Some genre are unavailable'
-        })
+        return response(res, 400, false, 'Some genre are unavailable')
       } else {
         results.forEach(item => {
           selectedGenre.push(item.id)
@@ -93,26 +92,16 @@ exports.createMovies = async (req, res) => {
     const initialResult = await movieModel.createMovies(data)
     if (initialResult.affectedRows > 0) {
       if (selectedGenre.length > 0) {
-        await movieModel.createMoviesGenre(initialResult.insertId, selectedGenre)
+        await movieGenreModel.createMoviesGenre(initialResult.insertId, selectedGenre)
       }
       const finalResult = await movieModel.getMovieById(initialResult.insertId)
       if (finalResult.length > 0) {
-        return res.json({
-          success: true,
-          message: 'Movie successfully created',
-          results: finalResult[0]
-        })
+        return response(res, 200, true, 'Movie successfully created', finalResult[0])
       }
-      return res.status(400).json({
-        success: false,
-        message: 'Failed to create Movie'
-      })
+      return response(res, 400, false, 'Failed to create Movie')
     }
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -121,21 +110,11 @@ exports.detailMovies = async (req, res) => {
     const { id } = req.params
     const results = await movieModel.getMovieById(id)
     if (results.length > 0) {
-      return res.json({
-        success: true,
-        message: 'Details of Movie',
-        results: results[0]
-      })
+      return response(res, 200, true, 'Details of Movie', results[0])
     }
-    return res.status(404).json({
-      success: false,
-      message: `Movies id ${id} not exists`
-    })
+    return response(res, 404, false, `Movies id ${id} not exists`)
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -156,22 +135,12 @@ exports.deleteMovie = async (req, res) => {
       }
       const results = await movieModel.deleteMovieById(id)
       if (results) {
-        return res.status(200).json({
-          success: true,
-          message: 'Data deleted successfully',
-          results: initialResult[0]
-        })
+        return response(res, 200, true, `Movie id ${id} deleted successfully`, initialResult[0])
       }
     }
-    return res.status(404).json({
-      success: false,
-      message: `Failed to delete data id ${id}`
-    })
+    return response(res, 400, false, `Failed to delete movie id ${id}`)
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -193,10 +162,7 @@ exports.updateMovie = async (req, res) => {
     if (typeof idGenre === 'object') {
       const results = await genreModel.checkGenres(idGenre)
       if (results.length !== idGenre.length) {
-        return res.status(404).json({
-          success: false,
-          message: 'Some genre are unavailable'
-        })
+        return response(res, 404, false, 'Some genre are unavailable')
       } else {
         results.forEach(item => {
           selectedGenre.push(item.id)
@@ -205,10 +171,7 @@ exports.updateMovie = async (req, res) => {
     } else if (typeof idGenre === 'string') {
       const results = await genreModel.checkGenres([idGenre])
       if (results.length !== idGenre.length) {
-        return res.status(404).json({
-          success: false,
-          message: 'Some genre are unavailable'
-        })
+        return response(res, 404, false, 'Some genre are unavailable')
       } else {
         results.forEach(item => {
           selectedGenre.push(item.id)
@@ -227,66 +190,35 @@ exports.updateMovie = async (req, res) => {
           }
         )
       }
-      const finalResult = await movieModel.getMovieGenreById(id)
+      const finalResult = await movieGenreModel.getMovieGenreById(id)
       console.log(selectedGenre.length === finalResult.length)
       const idMovieGenre = finalResult.map((item) => item.id)
       if ((finalResult.length === selectedGenre.length)) {
         for (let i = 0; i < idMovieGenre.length; i++) {
-          await movieModel.updateMoviesGenre(idMovieGenre[i], selectedGenre[i])
+          await movieGenreModel.updateMoviesGenre(idMovieGenre[i], selectedGenre[i])
           console.log(selectedGenre)
         }
         await movieModel.updateMovie(id, data)
-        return res.json({
-          success: true,
-          message: 'Update data success',
-          results: {
-            ...initialResult[0],
-            ...data
-          }
-        })
+        return response(res, 200, true, `Movie id ${id} updated successfully`, { ...initialResult[0], ...data })
       } else if (selectedGenre.length > finalResult.length) {
         for (let i = 0; i < idMovieGenre.length; i++) {
-          await movieModel.updateMoviesGenre(idMovieGenre[i], selectedGenre[i])
+          await movieGenreModel.updateMoviesGenre(idMovieGenre[i], selectedGenre[i])
         }
-        for (let i = selectedGenre.length; i > idMovieGenre.length; i--) {
-          await movieModel.createMoviesGenre(id, [selectedGenre[i - 1]])
-        }
+        await movieGenreModel.createMoviesGenre(id, selectedGenre.slice(finalResult.length))
         await movieModel.updateMovie(id, data)
-        return res.json({
-          success: true,
-          message: 'Update data success',
-          results: {
-            ...initialResult[0],
-            ...data
-          }
-        })
+        return response(res, 200, true, `Movie id ${id} updated successfully`, { ...initialResult[0], ...data })
       } else if (selectedGenre.length < finalResult.length) {
         for (let i = 0; i < selectedGenre.length; i++) {
-          await movieModel.updateMoviesGenre(idMovieGenre[i], selectedGenre[i])
+          await movieGenreModel.updateMoviesGenre(idMovieGenre[i], selectedGenre[i])
         }
-        for (let i = finalResult.length; i > selectedGenre.length; i--) {
-          await movieGenreModel.deleteMovieGenreById(idMovieGenre[i - 1])
-        }
+        await movieGenreModel.deleteMovieGenreById(idMovieGenre.slice(selectedGenre.length))
         await movieModel.updateMovie(id, data)
-        return res.json({
-          success: true,
-          message: 'Update data success',
-          results: {
-            ...initialResult[0],
-            ...data
-          }
-        })
+        return response(res, 200, true, `Movie id ${id} updated successfully`, { ...initialResult[0], ...data })
       }
     } else {
-      return res.json({
-        success: false,
-        message: `Failed to update data id ${id}`
-      })
+      return response(res, 400, false, `Failed to update movie id ${id}`)
     }
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }

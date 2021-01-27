@@ -6,7 +6,7 @@ exports.getCinamesByCondition = (cond) => {
     SELECT * FROM
     cinemas WHERE name LIKE "%${cond.search}%"
     ORDER BY ${cond.sort} ${cond.order}
-    LIMIT ${cond.dataLimit} OFFSET ${cond.offset}
+    LIMIT ${cond.limit} OFFSET ${cond.offset}
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
@@ -20,6 +20,19 @@ exports.getCountCinemas = () => {
       if (err) reject(err)
       resolve(res[0].total_cinemas)
     })
+  })
+}
+
+exports.getCountCinemaCondition = (cond) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`SELECT COUNT(name) as totalData FROM
+    cinemas WHERE name LIKE "%${cond.search}%"
+    GROUP BY name
+    ORDER BY ${cond.sort} ${cond.order}`, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
   })
 }
 
@@ -37,19 +50,6 @@ exports.createCinemas = (data = {}) => {
   })
 }
 
-exports.createCinemaShowtimes = (id, showtime) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`
-    INSERT INTO showtimes
-    (idCinema, showtime) 
-    VALUES ${showtime.map(item => `(${id}, '${item}')`).join()}`, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-    console.log(query.sql)
-  })
-}
-
 exports.getCinemaById = (id) => {
   return new Promise((resolve, reject) => {
     db.query(`
@@ -58,30 +58,6 @@ exports.getCinemaById = (id) => {
       if (err) reject(err)
       resolve(res)
     })
-  })
-}
-
-exports.getCinemaWithShowtimeById = (id) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`
-    SELECT c.*, s.showtime AS showtimes FROM cinemas c LEFT JOIN showtimes s on s.idCinema = c.id WHERE c.id=${id}
-    `, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-    console.log(query.sql)
-  })
-}
-
-exports.getCinemaShowtimeById = (id) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`
-    SELECT id FROM showtimes WHERE idCinema=${id}
-    `, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-    console.log(query.sql)
   })
 }
 
@@ -110,30 +86,5 @@ exports.updateCinema = (id, data) => {
       resolve(res)
     })
     console.log(query.db)
-  })
-}
-
-exports.updateCinemaShowtime = (id, showtime) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`
-    UPDATE showtimes 
-    SET showtime='${showtime}'
-    WHERE id=${id}`, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-    console.log(query.sql)
-  })
-}
-
-exports.deleteCinemaShowtimeById = (id) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`
-  DELETE FROM showtimes WHERE id IN (${id.map(item => `${item}`).join()})
-`, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-    console.log(query.sql)
   })
 }

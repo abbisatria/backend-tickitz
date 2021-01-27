@@ -1,7 +1,9 @@
 const { APP_URL } = process.env
 const cinemaModel = require('../models/cinemas')
 const validation = require('../helpers/validation')
+const response = require('../helpers/response')
 const fs = require('fs')
+const qs = require('querystring')
 
 exports.listCinemas = async (req, res) => {
   try {
@@ -9,33 +11,38 @@ exports.listCinemas = async (req, res) => {
     cond.search = cond.search || ''
     cond.page = Number(cond.page) || 1
     cond.limit = Number(cond.limit) || 5
-    cond.dataLimit = cond.limit * cond.page
     cond.offset = (cond.page - 1) * cond.limit
     cond.sort = cond.sort || 'id'
     cond.order = cond.order || 'ASC'
 
-    const totalData = await cinemaModel.getCountCinemas()
-
-    const totalPage = Math.ceil(Number(totalData) / cond.limit)
-
     const results = await cinemaModel.getCinamesByCondition(cond)
-    console.log(results.length)
-    return res.status(200).json({
-      success: true,
-      message: 'List of all Cinemas',
+    let totalPage
+    let totalData
+
+    if (cond.search) {
+      totalData = await cinemaModel.getCountCinemaCondition(cond)
+      totalPage = Math.ceil(Number(totalData.length) / cond.limit)
+    } else {
+      totalData = await cinemaModel.getCountCinemas()
+      totalPage = Math.ceil(Number(totalData) / cond.limit)
+    }
+
+    return response(
+      res,
+      200,
+      true,
+      'List of all Cinemas',
       results,
-      pageInfo: {
+      {
         totalData: results.length,
         currentPage: cond.page,
-        nextLink: cond.page < totalPage ? `${APP_URL}cinemas?page=${cond.page + 1}` : null,
-        prevLink: cond.page > 1 ? `${APP_URL}cinemas?page=${cond.page - 1}` : null
+        totalPage,
+        nextLink: cond.page < totalPage ? `${APP_URL}cinemas?${qs.stringify({ ...req.query, ...{ page: cond.page + 1 } })}` : null,
+        prevLink: cond.page > 1 ? `${APP_URL}cinemas?${qs.stringify({ ...req.query, ...{ page: cond.page - 1 } })}` : null
       }
-    })
+    )
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -50,7 +57,6 @@ exports.createCinemas = async (req, res) => {
   }
   try {
     const data = req.body
-    const selectedShowtime = data.showtime
     const cinemaData = {
       name: data.name,
       image: req.file === undefined ? null : req.file.filename,
@@ -60,38 +66,14 @@ exports.createCinemas = async (req, res) => {
     }
     const results = await cinemaModel.createCinemas(cinemaData)
     if (results.affectedRows > 0) {
-      if (typeof selectedShowtime === 'object') {
-        await cinemaModel.createCinemaShowtimes(results.insertId, selectedShowtime)
-      }
-      if (typeof selectedShowtime === 'string') {
-        await cinemaModel.createCinemaShowtimes(results.insertId, [selectedShowtime])
-      }
-      const finalResult = await cinemaModel.getCinemaWithShowtimeById(results.insertId)
+      const finalResult = await cinemaModel.getCinemaById(results.insertId)
       if (finalResult.length > 0) {
-        return res.json({
-          success: true,
-          message: 'Create data success',
-          results: {
-            id: finalResult[0].id,
-            name: finalResult[0].name,
-            image: finalResult[0].image,
-            location: finalResult[0].location,
-            address: finalResult[0].address,
-            price: finalResult[0].price,
-            showtime: finalResult.map(item => item.showtimes)
-          }
-        })
+        return response(res, 200, true, 'Create data success', finalResult[0])
       }
-      return res.status(400).json({
-        success: false,
-        message: 'Failed to create cinema'
-      })
+      return response(res, 400, false, 'Failed to create cinema')
     }
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -100,21 +82,11 @@ exports.detailCinemas = async (req, res) => {
     const { id } = req.params
     const results = await cinemaModel.getCinemaById(id)
     if (results.length > 0) {
-      return res.json({
-        success: true,
-        message: 'Details of Cinema',
-        results: results[0]
-      })
+      return response(res, 200, true, 'Details of Cinema', results[0])
     }
-    return res.status(404).json({
-      success: false,
-      message: `Cinemas id ${id} not exists`
-    })
+    return response(res, 404, false, `Cinemas id ${id} not exists`)
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -135,22 +107,12 @@ exports.deleteCinema = async (req, res) => {
       }
       const results = await cinemaModel.deleteCinemaById(id)
       if (results) {
-        return res.status(200).json({
-          success: true,
-          message: 'Data deleted successfully',
-          results: initialResult[0]
-        })
+        return response(res, 200, true, `Cinema id ${id} deleted successfully`, initialResult[0])
       }
     }
-    return res.status(404).json({
-      success: false,
-      message: `Failed to delete data id ${id}`
-    })
+    return response(res, 400, false, `Failed to delete cinema id ${id}`)
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }
 
@@ -165,8 +127,7 @@ exports.updateCinema = async (req, res) => {
       address: data.address,
       price: data.price
     }
-    const selectedShowtime = data.showtime
-    const initialResult = await cinemaModel.getCinemaWithShowtimeById(id)
+    const initialResult = await cinemaModel.getCinemaById(id)
     if (initialResult.length > 0) {
       if (cinemaData.image) {
         fs.unlink(`./uploads/cinemas/${initialResult[0].image}`,
@@ -178,62 +139,12 @@ exports.updateCinema = async (req, res) => {
           }
         )
       }
-      const results = await cinemaModel.getCinemaShowtimeById(id)
-      const idShowtime = results.map((item) => item.id)
-      if (selectedShowtime.length === results.length) {
-        for (let i = 0; i < idShowtime.length; i++) {
-          await cinemaModel.updateCinemaShowtime(idShowtime[i], selectedShowtime[i])
-          console.log(selectedShowtime)
-        }
-        await cinemaModel.updateCinema(id, cinemaData)
-        return res.json({
-          success: true,
-          message: 'Create data success',
-          results: {
-            ...initialResult[0],
-            ...data
-          }
-        })
-      } else if (selectedShowtime.length > results.length) {
-        for (let i = 0; i < (selectedShowtime.length - idShowtime.length); i++) {
-          await cinemaModel.updateCinemaShowtime(idShowtime[i], selectedShowtime[i])
-          console.log(selectedShowtime)
-        }
-        await cinemaModel.createCinemaShowtimes(id, selectedShowtime.slice(results.length))
-        await cinemaModel.updateCinema(id, cinemaData)
-        return res.json({
-          success: true,
-          message: 'Create data success',
-          results: {
-            ...initialResult[0],
-            ...data
-          }
-        })
-      } else if (selectedShowtime.length < results.length) {
-        for (let i = 0; i < (idShowtime.length - selectedShowtime.length); i++) {
-          await cinemaModel.updateCinemaShowtime(idShowtime[i], selectedShowtime[i])
-        }
-        await cinemaModel.deleteCinemaShowtimeById(idShowtime.slice(selectedShowtime.length))
-        await cinemaModel.updateCinema(id, cinemaData)
-        return res.json({
-          success: true,
-          message: 'Create data success',
-          results: {
-            ...initialResult[0],
-            ...data
-          }
-        })
-      }
+      await cinemaModel.updateCinema(id, data)
+      return response(res, 200, true, `Cinema id ${id} updated successfully`, { ...initialResult[0], ...data })
     } else {
-      return res.json({
-        success: false,
-        message: `Failed to update data id ${id}`
-      })
+      return response(res, 400, false, `Failed to update cinema id ${id}`)
     }
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bad Request'
-    })
+    return response(res, 400, false, 'Bad Request')
   }
 }

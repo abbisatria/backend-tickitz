@@ -10,7 +10,7 @@ exports.getMoviesByCondition = (cond) => {
     WHERE m.name LIKE "%${cond.search}%" 
     GROUP BY m.id, m.name, m.image, m.releaseDate, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
     ORDER BY ${cond.sort} ${cond.order}
-    LIMIT ${cond.dataLimit} OFFSET ${cond.offset}
+    LIMIT ${cond.limit} OFFSET ${cond.offset}
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
@@ -24,6 +24,19 @@ exports.getCountMovies = () => {
       if (err) reject(err)
       resolve(res[0].total_movies)
     })
+  })
+}
+
+exports.getCountMovieCondition = (cond) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`SELECT COUNT(name) as totalData FROM
+    movies WHERE name LIKE "%${cond.search}%"
+    GROUP BY name
+    ORDER BY ${cond.sort} ${cond.order}`, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
   })
 }
 
@@ -41,18 +54,6 @@ exports.createMovies = (data = {}) => {
   })
 }
 
-exports.createMoviesGenre = (id, genre) => {
-  return new Promise((resolve, reject) => {
-    db.query(`
-    INSERT INTO movie_genre 
-    (idMovie, idGenre) 
-    VALUES ${genre.map(item => `(${id}, ${item})`).join()}`, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-  })
-}
-
 exports.getMovieById = (id) => {
   return new Promise((resolve, reject) => {
     db.query(`
@@ -62,17 +63,6 @@ exports.getMovieById = (id) => {
     LEFT JOIN genre g on mg.idGenre = g.id 
     WHERE m.id=${id} 
     GROUP BY m.id, m.name, m.image, m.releaseDate, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
-    `, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-  })
-}
-
-exports.getMovieGenreById = (id) => {
-  return new Promise((resolve, reject) => {
-    db.query(`
-      SELECT id FROM movie_genre WHERE idMovie=${id}
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
@@ -104,18 +94,5 @@ exports.updateMovie = (id, data) => {
       if (err) reject(err)
       resolve(res)
     })
-  })
-}
-
-exports.updateMoviesGenre = (id, genre) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`
-    UPDATE movie_genre 
-    SET idGenre=${genre}
-    WHERE id=${id}`, (err, res, field) => {
-      if (err) reject(err)
-      resolve(res)
-    })
-    console.log(query.sql)
   })
 }
