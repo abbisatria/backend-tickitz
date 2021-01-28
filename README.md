@@ -63,3 +63,6 @@ DB_PASSWORD=
   "results" : [{ "results" }]
 }
 ``` 
+
+### Documentation Postman
+* [Tickitz Backend](https://documenter.getpostman.com/view/12252506/TW6wJTr7)
