@@ -102,7 +102,7 @@ exports.createUserProfile = (data) => {
     INSERT INTO user_detail
     (${Object.keys(data).join()})
     VALUES
-    (${Object.values(data).map(item => `"${item}"`).join(',')})
+    (${Object.values(data).map(item => `${item}`).join(',')})
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
