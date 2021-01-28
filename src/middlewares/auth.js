@@ -17,7 +17,7 @@ exports.authCheck = (req, res, next) => {
 
 exports.isAdmin = (req, res, next) => {
   if (req.userData.role > 1) {
-    return response(res, 400, 'You are not admin!')
+    return response(res, 401, 'You are not admin!')
   } else {
     next()
   }
