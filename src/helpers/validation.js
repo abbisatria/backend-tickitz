@@ -4,6 +4,7 @@ module.exports = {
     const schema = Joi.object({
       name: Joi.string().min(3).required(),
       releaseDate: Joi.required(),
+      category: Joi.required(),
       directed: Joi.string().min(3).required(),
       duration: Joi.required(),
       casts: Joi.string().min(3).required(),
@@ -38,7 +39,8 @@ module.exports = {
     const schema = Joi.object({
       showtime: Joi.required(),
       idMovie: Joi.required(),
-      idCinema: Joi.required()
+      idCinema: Joi.required(),
+      showtimeDate: Joi.required()
     })
     return schema.validate(showtime)
   }

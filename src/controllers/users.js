@@ -1,5 +1,6 @@
 const userModel = require('../models/users')
 const response = require('../helpers/response')
+const fs = require('fs')
 
 exports.detailUserProfile = async (req, res) => {
   try {
@@ -21,7 +22,8 @@ exports.updateUserProfile = async (req, res) => {
     const dataProfile = {
       firstname: firstname,
       lastname: lastname,
-      phoneNumber: phoneNumber
+      phoneNumber: phoneNumber,
+      image: req.file === undefined ? null : req.file.filename
     }
     const user = {
       email: email
@@ -29,12 +31,20 @@ exports.updateUserProfile = async (req, res) => {
     const initialResult = await userModel.getUserProfileById(id)
     if (initialResult.length > 0) {
       if (user.email) {
+        if (dataProfile.image) {
+          fs.unlink(`./uploads/users/${initialResult[0].image}`,
+            function (err) {
+              if (err) {
+                console.log('image')
+              }
+              console.log('Image Update Old File deleted!')
+            }
+          )
+        }
         await userModel.updateUser(id, user)
         await userModel.updateUserProfile(id, dataProfile)
         return response(res, 200, true, `User id ${id} updated successfully`, { ...dataProfile, ...user })
       }
-      await userModel.updateUserProfile(id, dataProfile)
-      return response(res, 200, true, `User id ${id} updated successfully`, { ...dataProfile, ...user })
     } else {
       return response(res, 200, false, `Failed to update user id ${id}`)
     }

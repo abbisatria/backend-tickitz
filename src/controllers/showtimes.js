@@ -16,13 +16,15 @@ exports.createShowtime = async (req, res) => {
     const selectedShowtime = data.showtime
     const showtimeData = {
       idCinema: data.idCinema,
-      idMovie: data.idMovie
+      idMovie: data.idMovie,
+      showtimeDate: data.showtimeDate
     }
+    console.log(showtimeData.showtimeDate)
     if (typeof selectedShowtime === 'object') {
-      await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, showtimeData.idMovie, selectedShowtime)
+      await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, showtimeData.idMovie, selectedShowtime, showtimeData.showtimeDate)
     }
     if (typeof selectedShowtime === 'string') {
-      await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, showtimeData.idMovie, [selectedShowtime])
+      await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, showtimeData.idMovie, [selectedShowtime], showtimeData.showtimeDate)
     }
     const finalResult = await showtimeModel.getShowtimeWithCinemaAndMovie(showtimeData.idMovie)
     if (finalResult.length > 0) {
@@ -30,6 +32,7 @@ exports.createShowtime = async (req, res) => {
         id: finalResult[0].id,
         movie: finalResult[0].movie,
         cinema: finalResult[0].cinema,
+        showtimeDate: finalResult[0].showtimeDate,
         showtime: finalResult.map(item => item.showtime)
       })
     }
@@ -41,19 +44,22 @@ exports.createShowtime = async (req, res) => {
 
 exports.listCinemaShowtime = async (req, res) => {
   try {
-    const { search } = req.body
-    const resultSearch = await showtimeModel.getLocationCinema(search)
+    const { date, search, idMovie } = req.body
+    const resultSearch = await showtimeModel.getLocationCinema(search, date, idMovie)
     if (resultSearch.length > 0) {
-      const cinema = await showtimeModel.getCinema()
-      const showtime = await showtimeModel.getShowtime()
+      console.log(resultSearch)
+      const mapShowtime = resultSearch.map(item => item.idShowtime)
+      const mapIdCinema = resultSearch.map(item => item.idCinema)
+      const cinema = await showtimeModel.getCinema([...new Set(mapIdCinema)])
+      const showtime = await showtimeModel.getShowtime(mapShowtime)
+      console.log(showtime)
       const hash = Object.create(null)
       const result = cinema.map(((hash) => (cinema) => (hash[cinema.id] = { id: cinema.id, name: cinema.name, location: cinema.location, address: cinema.address, price: cinema.price, showtime: [] }))(hash))
-
       showtime.forEach((hash => showtime => hash[showtime.idCinema].showtime.push({ id: showtime.id, name: showtime.showtime }))(hash))
 
       return response(res, 200, true, 'List of Cinema Showtime', result)
     }
-    return response(res, 404, false, `Location ${search} not exists`)
+    return response(res, 404, false, `Location ${search}, ShowtimeDate ${date}, and idMovie ${idMovie} not exists`)
   } catch (error) {
     return response(res, 400, false, 'Bad Request')
   }
@@ -66,7 +72,8 @@ exports.updateShowtime = async (req, res) => {
     const selectedShowtime = data.showtime
     const showtimeData = {
       idCinema: data.idCinema,
-      idMovie: data.idMovie
+      idMovie: data.idMovie,
+      showtimeDate: data.showtimeDate
     }
     const initialResult = await showtimeModel.getShowtimeWithCinemaAndMovie(id)
     if (initialResult.length > 0) {
@@ -77,13 +84,14 @@ exports.updateShowtime = async (req, res) => {
           for (let i = 0; i < idShowtime.length; i++) {
             await showtimeModel.updateCinemaShowtime(idShowtime[i], selectedShowtime[i])
           }
+          console.log('test')
           await showtimeModel.updateShowtime(id, showtimeData)
           return response(res, 200, true, 'Updated successfully', { ...initialResult[0], ...data })
         } else if (selectedShowtime.length > results.length) {
           for (let i = 0; i < idShowtime.length; i++) {
             await showtimeModel.updateCinemaShowtime(idShowtime[i], selectedShowtime[i])
           }
-          await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, id, selectedShowtime.slice(results.length, selectedShowtime.length))
+          await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, id, selectedShowtime.slice(results.length, selectedShowtime.length), showtimeData.showtimeDate)
           await showtimeModel.updateShowtime(id, showtimeData)
           return response(res, 200, true, 'Updated successfully', { ...initialResult[0], ...data })
         } else if (selectedShowtime.length < results.length) {

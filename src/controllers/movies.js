@@ -57,11 +57,12 @@ exports.createMovies = async (req, res) => {
   }
 
   try {
-    const { name, releaseDate, directed, duration, casts, description } = req.body
+    const { name, releaseDate, category, directed, duration, casts, description } = req.body
     const data = {
       name,
       image: req.file === undefined ? null : req.file.filename,
       releaseDate,
+      category,
       directed,
       duration,
       casts,
@@ -147,11 +148,12 @@ exports.deleteMovie = async (req, res) => {
 exports.updateMovie = async (req, res) => {
   try {
     const { id } = req.params
-    const { name, releaseDate, directed, duration, casts, description } = req.body
+    const { name, releaseDate, category, directed, duration, casts, description } = req.body
     const data = {
       name,
       image: req.file === undefined ? null : req.file.filename,
       releaseDate,
+      category,
       directed,
       duration,
       casts,

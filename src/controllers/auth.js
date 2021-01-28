@@ -22,8 +22,7 @@ exports.login = async (req, res) => {
           const { id, role } = existingUser[0]
           const token = jwt.sign({ id, role }, APP_KEY)
           const results = {
-            token: token,
-            role: existingUser[0].role
+            token: token
           }
           return response(res, 200, true, 'Login succesfully', results)
         } else {

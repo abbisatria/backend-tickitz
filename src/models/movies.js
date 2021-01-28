@@ -8,7 +8,7 @@ exports.getMoviesByCondition = (cond) => {
     LEFT JOIN movie_genre mg on m.id = mg.idMovie 
     LEFT JOIN genre g on mg.idGenre = g.id 
     WHERE m.name LIKE "%${cond.search}%" 
-    GROUP BY m.id, m.name, m.image, m.releaseDate, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
+    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
     ORDER BY ${cond.sort} ${cond.order}
     LIMIT ${cond.limit} OFFSET ${cond.offset}
     `, (err, res, field) => {
@@ -62,7 +62,7 @@ exports.getMovieById = (id) => {
     LEFT JOIN movie_genre mg on m.id = mg.idMovie 
     LEFT JOIN genre g on mg.idGenre = g.id 
     WHERE m.id=${id} 
-    GROUP BY m.id, m.name, m.image, m.releaseDate, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
+    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
