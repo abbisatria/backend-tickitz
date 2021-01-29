@@ -5,7 +5,7 @@ exports.createCinemaShowtimes = (idCinema, idMovie, showtime, showtimeDate) => {
     const query = db.query(`
     INSERT INTO showtimes
     (idCinema, idMovie, showtime, showtimeDate) 
-    VALUES ${showtime.map(item => `(${idCinema}, ${idMovie}, '${item}', '${showtimeDate}')`).join()}`, (err, res, field) => {
+    VALUES ${idCinema.map(cinema => showtime.map(showtime => `(${cinema}, ${idMovie}, '${showtime}', '${showtimeDate}')`).join()).join()}`, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
     })

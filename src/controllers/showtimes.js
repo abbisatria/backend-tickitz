@@ -14,24 +14,29 @@ exports.createShowtime = async (req, res) => {
   try {
     const data = req.body
     const selectedShowtime = data.showtime
+    const selectedCinema = data.idCinema
     const showtimeData = {
-      idCinema: data.idCinema,
       idMovie: data.idMovie,
       showtimeDate: data.showtimeDate
     }
-    console.log(showtimeData.showtimeDate)
-    if (typeof selectedShowtime === 'object') {
-      await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, showtimeData.idMovie, selectedShowtime, showtimeData.showtimeDate)
+    if (typeof selectedCinema === 'object' && typeof selectedShowtime === 'object') {
+      await showtimeModel.createCinemaShowtimes(selectedCinema, showtimeData.idMovie, selectedShowtime, showtimeData.showtimeDate)
     }
-    if (typeof selectedShowtime === 'string') {
-      await showtimeModel.createCinemaShowtimes(showtimeData.idCinema, showtimeData.idMovie, [selectedShowtime], showtimeData.showtimeDate)
+    if (typeof selectedCinema === 'object' && typeof selectedShowtime === 'string') {
+      await showtimeModel.createCinemaShowtimes(selectedCinema, showtimeData.idMovie, [selectedShowtime], showtimeData.showtimeDate)
+    }
+    if (typeof selectedCinema === 'string' && typeof selectedShowtime === 'object') {
+      await showtimeModel.createCinemaShowtimes([selectedCinema], showtimeData.idMovie, selectedShowtime, showtimeData.showtimeDate)
+    }
+    if (typeof selectedCinema === 'string' && typeof selectedShowtime === 'string') {
+      await showtimeModel.createCinemaShowtimes([selectedCinema], showtimeData.idMovie, [selectedShowtime], showtimeData.showtimeDate)
     }
     const finalResult = await showtimeModel.getShowtimeWithCinemaAndMovie(showtimeData.idMovie)
     if (finalResult.length > 0) {
       return response(res, 200, true, 'Create data success', {
         id: finalResult[0].id,
         movie: finalResult[0].movie,
-        cinema: finalResult[0].cinema,
+        cinema: finalResult.map(item => item.cinema),
         showtimeDate: finalResult[0].showtimeDate,
         showtime: finalResult.map(item => item.showtime)
       })

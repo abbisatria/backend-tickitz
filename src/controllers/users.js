@@ -1,6 +1,7 @@
 const userModel = require('../models/users')
 const response = require('../helpers/response')
 const fs = require('fs')
+const bcrypt = require('bcrypt')
 
 exports.detailUserProfile = async (req, res) => {
   try {
@@ -18,7 +19,9 @@ exports.detailUserProfile = async (req, res) => {
 exports.updateUserProfile = async (req, res) => {
   try {
     const { id } = req.params
-    const { firstname, lastname, phoneNumber, email } = req.body
+    const { firstname, lastname, phoneNumber, email, password } = req.body
+    const salt = await bcrypt.genSalt()
+    const encryptedPassword = await bcrypt.hash(password, salt)
     const dataProfile = {
       firstname: firstname,
       lastname: lastname,
@@ -26,7 +29,8 @@ exports.updateUserProfile = async (req, res) => {
       image: req.file === undefined ? null : req.file.filename
     }
     const user = {
-      email: email
+      email: email,
+      password: encryptedPassword
     }
     const initialResult = await userModel.getUserProfileById(id)
     if (initialResult.length > 0) {
