@@ -50,12 +50,25 @@ exports.createTransaction = async (req, res) => {
 
 exports.detailTransaction = async (req, res) => {
   try {
-    const { idUser } = req.params
-    const results = await transactionModel.getUserTransactionByIdUser(idUser)
+    const { id } = req.params
+    const results = await transactionModel.getUserTransactionById(id)
     if (results.length > 0) {
       return response(res, 200, true, 'Details of Transaction', results)
     }
-    return response(res, 404, false, `Transaction id ${idUser} not exists`)
+    return response(res, 404, false, `Transaction id ${id} not exists`)
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.orderHistory = async (req, res) => {
+  try {
+    const { idUser } = req.params
+    const results = await transactionModel.getUserTransactionByIdUser(idUser)
+    if (results.length > 0) {
+      return response(res, 200, true, 'Details of Order History Transaction', results)
+    }
+    return response(res, 404, false, `Transaction idUser ${idUser} not exists`)
   } catch (error) {
     return response(res, 400, false, 'Bad Request')
   }
