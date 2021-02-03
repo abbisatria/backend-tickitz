@@ -30,7 +30,7 @@ exports.createSoldSeat = (idShowtime, seat) => {
 
 exports.getUserTransactionById = (id) => {
   return new Promise((resolve, reject) => {
-    const query = db.query(`SELECT t.id, u.email, m.name AS movie, c.name AS cinema, s.showtime AS showtime, t.seats, t.ticketCount, t.totalPayment FROM transactions t
+    const query = db.query(`SELECT t.id, u.email, m.name AS movie, m.category, c.name AS cinema, c.price, s.showtime AS showtime, s.showtimeDate, t.seats, t.ticketCount, t.totalPayment FROM transactions t
     LEFT JOIN users u on u.id = t.idUser
     LEFT JOIN movies m on m.id = t.idMovie
     LEFT JOIN cinemas c on c.id = t.idCinema
@@ -45,7 +45,7 @@ exports.getUserTransactionById = (id) => {
 
 exports.getUserTransactionByIdUser = (id) => {
   return new Promise((resolve, reject) => {
-    const query = db.query(`SELECT u.email, m.name AS movie, c.name AS cinema, s.showtime AS showtime, t.seats, t.ticketCount, t.totalPayment FROM transactions t
+    const query = db.query(`SELECT u.email, m.name AS movie, c.name AS cinema, c.image, s.showtime AS showtime, t.seats, t.ticketCount, t.totalPayment, t.createdAt FROM transactions t
     LEFT JOIN users u on u.id = t.idUser
     LEFT JOIN movies m on m.id = t.idMovie
     LEFT JOIN cinemas c on c.id = t.idCinema

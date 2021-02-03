@@ -5,6 +5,7 @@ const cinemaModel = require('../models/cinemas')
 exports.createTransaction = async (req, res) => {
   try {
     const data = req.body
+    console.log(data.seat)
     if (typeof data.seat === 'object') {
       await transactionModel.createSoldSeat(data.idShowtime, data.seat)
       const seat = data.seat.map(item => item).join(', ')

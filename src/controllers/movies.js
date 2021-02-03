@@ -224,3 +224,34 @@ exports.updateMovie = async (req, res) => {
     return response(res, 400, false, 'Bad Request')
   }
 }
+
+exports.getMovieMonth = async (req, res) => {
+  try {
+    const results = await movieModel.getMovieUpComing()
+    if (results.length > 0) {
+      const date = new Date()
+      const finalResults = results.filter(item => {
+        return (item.releaseDate.getMonth() + 1) > (date.getMonth() + 1)
+      })
+      return response(res, 200, true, 'List of Movie Upcoming', finalResults)
+    }
+    return response(res, 404, false, 'Movie not exists')
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.getMovieNowShowing = async (req, res) => {
+  try {
+    const results = await movieModel.getMovieShow()
+    if (results.length > 0) {
+      const mapIdMovie = results.map(item => item.id)
+      const finalResults = await movieModel.getMovieShowById([...new Set(mapIdMovie)])
+
+      return response(res, 200, true, 'List of Movie Now Showing', finalResults)
+    }
+    return response(res, 404, false, 'Movie not exists')
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}

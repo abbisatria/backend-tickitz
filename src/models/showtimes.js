@@ -44,7 +44,11 @@ exports.getCinemaShowtimeById = (id) => {
 exports.getShowtimesById = (id) => {
   return new Promise((resolve, reject) => {
     db.query(`
-      SELECT * FROM showtimes WHERE id=${id}
+    SELECT s.id, m.name AS movie, c.name AS cinema, c.image AS image, s.showtime, s.showtimeDate, c.price, m.id AS idMovie, c.id AS idCinema
+    FROM showtimes s 
+    INNER JOIN cinemas c on c.id = s.idCinema 
+    INNER JOIN movies m on m.id = s.idMovie 
+    WHERE s.id=${id}
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)

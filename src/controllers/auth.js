@@ -14,13 +14,13 @@ exports.login = async (req, res) => {
   }
   try {
     const { email, password } = req.body
-    const existingUser = await userModel.getUsersByCondition({ email })
+    const existingUser = await userModel.getUsers(email)
     if (existingUser.length > 0) {
       if (existingUser[0].status !== 'pending') {
         const compare = bcrypt.compareSync(password, existingUser[0].password)
         if (compare) {
-          const { id, role } = existingUser[0]
-          const token = jwt.sign({ id, role }, APP_KEY)
+          const { id, email, role, firstname, lastname, phoneNumber, image } = existingUser[0]
+          const token = jwt.sign({ id, email, role, firstname, lastname, phoneNumber, image }, APP_KEY)
           const results = {
             token: token
           }
@@ -72,7 +72,7 @@ exports.verificationEmail = async (req, res) => {
     if (id) {
       const update = await userModel.updateStatusUser(id)
       console.log(update)
-      return res.redirect('https://tickitz-react.netlify.app/sign-in')
+      return res.redirect('http://localhost:3000/sign-in')
     }
     return response(res, 400, false, 'Failed email verification')
   } catch (error) {
@@ -84,8 +84,10 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
     const existingUser = await userModel.getUsersByCondition({ email })
+    const id = existingUser[0].id
+    const token = jwt.sign({ id }, APP_KEY)
     if (existingUser.length > 0) {
-      sendEmail(existingUser[0].id, `https://tickitz-react.netlify.app/forgot-password/${existingUser[0].id}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      sendEmail(existingUser[0].id, `http://localhost:3000/forgot-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
       return response(res, 200, true, 'Please check email to reset password!')
     }
     return response(res, 401, false, 'Email not registered')
@@ -96,11 +98,13 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { id } = req.params
+    const { token } = req.params
+    const data = jwt.verify(token, APP_KEY)
+    console.log(data)
     const password = req.body
     const salt = await bcrypt.genSalt()
     const encryptedPassword = await bcrypt.hash(password.password, salt)
-    const update = await userModel.updateUser(id, { password: encryptedPassword })
+    const update = await userModel.updateUser(data.id, { password: encryptedPassword })
     if (update.affectedRows > 0) {
       return response(res, 200, true, 'Reset Password Success')
     }

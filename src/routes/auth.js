@@ -5,6 +5,6 @@ routes.post('/register', authController.register)
 routes.post('/login', authController.login)
 routes.post('/forgotPassword', authController.forgotPassword)
 routes.get('/verification/:id', authController.verificationEmail)
-routes.patch('/resetPassword/:id', authController.resetPassword)
+routes.patch('/resetPassword/:token', authController.resetPassword)
 
 module.exports = routes

@@ -3,7 +3,8 @@ const db = require('../helpers/db')
 exports.getUsersById = (id) => {
   return new Promise((resolve, reject) => {
     db.query(`
-      SELECT * FROM users WHERE id=${id}
+    SELECT u.id, u.email, u.password, u.role, ud.firstname, ud.lastname, ud.phoneNumber, ud.image FROM user_detail ud 
+    INNER JOIN users u ON u.id = ud.idUser WHERE u.id=${id}
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
@@ -15,6 +16,19 @@ exports.getUsersByCondition = (cond) => {
   return new Promise((resolve, reject) => {
     const query = db.query(`
     SELECT * FROM users WHERE ${Object.keys(cond).map(item => `${item}="${cond[item]}"`).join(' AND ')}
+  `, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
+  })
+}
+
+exports.getUsers = (cond) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`
+    SELECT u.id, u.email, u.password, u.role, ud.firstname, ud.lastname, ud.phoneNumber, ud.image FROM user_detail ud 
+    INNER JOIN users u ON u.id = ud.idUser WHERE u.email="${cond}"
   `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)

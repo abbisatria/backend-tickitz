@@ -47,6 +47,19 @@ exports.createShowtime = async (req, res) => {
   }
 }
 
+exports.detailShowtime = async (req, res) => {
+  try {
+    const { id } = req.params
+    const results = await showtimeModel.getShowtimesById(id)
+    if (results.length > 0) {
+      return response(res, 200, true, 'Details of Showtime', results)
+    }
+    return response(res, 404, false, `Showtime id ${id} not exists`)
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
 exports.listCinemaShowtime = async (req, res) => {
   try {
     const { date, search, idMovie } = req.body
@@ -59,7 +72,7 @@ exports.listCinemaShowtime = async (req, res) => {
       const showtime = await showtimeModel.getShowtime(mapShowtime)
       console.log(showtime)
       const hash = Object.create(null)
-      const result = cinema.map(((hash) => (cinema) => (hash[cinema.id] = { id: cinema.id, name: cinema.name, location: cinema.location, address: cinema.address, price: cinema.price, showtime: [] }))(hash))
+      const result = cinema.map(((hash) => (cinema) => (hash[cinema.id] = { id: cinema.id, name: cinema.name, image: cinema.image, location: cinema.location, address: cinema.address, price: cinema.price, showtime: [] }))(hash))
       showtime.forEach((hash => showtime => hash[showtime.idCinema].showtime.push({ id: showtime.id, name: showtime.showtime }))(hash))
 
       return response(res, 200, true, 'List of Cinema Showtime', result)
@@ -129,7 +142,7 @@ exports.deleteShowtime = async (req, res) => {
     if (initialResult.length > 0) {
       const results = await showtimeModel.deleteShowtimeById(id)
       if (results) {
-        return response(res, 200, true, `Showtime id ${id} deleted successfully`, initialResult[0])
+        return response(res, 200, true, `Showtime id ${id} deleted successfully`, initialResult)
       }
     }
     return response(res, 400, false, `Failed to delete showtime id ${id}`)

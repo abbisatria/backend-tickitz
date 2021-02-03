@@ -96,3 +96,45 @@ exports.updateMovie = (id, data) => {
     })
   })
 }
+
+exports.getMovieShow = () => {
+  return new Promise((resolve, reject) => {
+    db.query(`SELECT m.* FROM movies m
+    INNER JOIN showtimes s ON m.id = s.idMovie`,
+    (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+  })
+}
+
+exports.getMovieShowById = (id) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`
+    SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
+    FROM movies m 
+    LEFT JOIN movie_genre mg on m.id = mg.idMovie 
+    LEFT JOIN genre g on mg.idGenre = g.id 
+    WHERE m.id IN (${id.map(item => `${item}`).join()})
+    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
+    `, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
+  })
+}
+
+exports.getMovieUpComing = () => {
+  return new Promise((resolve, reject) => {
+    db.query(`SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
+    FROM movies m 
+    LEFT JOIN movie_genre mg on m.id = mg.idMovie 
+    LEFT JOIN genre g on mg.idGenre = g.id 
+    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt`,
+    (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+  })
+}
