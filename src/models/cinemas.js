@@ -88,3 +88,27 @@ exports.updateCinema = (id, data) => {
     console.log(query.db)
   })
 }
+
+exports.getlocation = () => {
+  return new Promise((resolve, reject) => {
+    db.query(`
+      SELECT location FROM cinemas
+    `, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+  })
+}
+
+exports.getCinemaLocation = (location) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`
+    SELECT * FROM cinemas 
+    WHERE location LIKE "%${location}%"
+    `, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
+  })
+}

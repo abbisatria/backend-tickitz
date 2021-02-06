@@ -102,6 +102,7 @@ exports.createMovies = async (req, res) => {
       return response(res, 400, false, 'Failed to create Movie')
     }
   } catch (error) {
+    console.log(error)
     return response(res, 400, false, 'Bad Request')
   }
 }

@@ -2,13 +2,14 @@ const db = require('../helpers/db')
 
 exports.createMoviesGenre = (id, genre) => {
   return new Promise((resolve, reject) => {
-    db.query(`
+    const query = db.query(`
     INSERT INTO movie_genre 
     (idMovie, idGenre) 
     VALUES ${genre.map(item => `(${id}, ${item})`).join()}`, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
     })
+    console.log(query.sql)
   })
 }
 

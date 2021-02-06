@@ -90,9 +90,10 @@ exports.updateGenre = (id, data) => {
 
 exports.checkGenres = (data = []) => {
   return new Promise((resolve, reject) => {
-    db.query(`SELECT * FROM genre WHERE id IN (${data.map(item => item).join()})`, (err, res, field) => {
+    const query = db.query(`SELECT * FROM genre WHERE id IN (${data.map(item => item).join()})`, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
     })
+    console.log(query.sql)
   })
 }

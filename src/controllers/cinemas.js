@@ -148,3 +148,31 @@ exports.updateCinema = async (req, res) => {
     return response(res, 400, false, 'Bad Request')
   }
 }
+
+exports.listLocation = async (req, res) => {
+  try {
+    const results = await cinemaModel.getlocation()
+    if (results.length > 0) {
+      const mapResults = results.map(item => item.location)
+      const finalResults = [...new Set(mapResults)]
+      return response(res, 200, true, 'List of Location', finalResults)
+    }
+    return response(res, 404, false, 'Location Not Found')
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.getCinemaByLocation = async (req, res) => {
+  try {
+    const { location } = req.body
+    const results = await cinemaModel.getCinemaLocation(location)
+    console.log(results)
+    if (results.length > 0) {
+      return response(res, 200, true, 'List of Location', results)
+    }
+    return response(res, 404, false, 'Cinema Location Not Found')
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}

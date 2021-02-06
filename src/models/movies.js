@@ -42,7 +42,7 @@ exports.getCountMovieCondition = (cond) => {
 
 exports.createMovies = (data = {}) => {
   return new Promise((resolve, reject) => {
-    db.query(`
+    const query = db.query(`
     INSERT INTO movies
     (${Object.keys(data).join()})
     VALUES
@@ -51,12 +51,13 @@ exports.createMovies = (data = {}) => {
       if (err) reject(err)
       resolve(res)
     })
+    console.log(query.sql)
   })
 }
 
 exports.getMovieById = (id) => {
   return new Promise((resolve, reject) => {
-    db.query(`
+    const query = db.query(`
     SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
     FROM movies m 
     LEFT JOIN movie_genre mg on m.id = mg.idMovie 
@@ -67,6 +68,7 @@ exports.getMovieById = (id) => {
       if (err) reject(err)
       resolve(res)
     })
+    console.log(query.sql)
   })
 }
 

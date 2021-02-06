@@ -44,7 +44,7 @@ exports.getCinemaShowtimeById = (id) => {
 exports.getShowtimesById = (id) => {
   return new Promise((resolve, reject) => {
     db.query(`
-    SELECT s.id, m.name AS movie, c.name AS cinema, c.image AS image, s.showtime, s.showtimeDate, c.price, m.id AS idMovie, c.id AS idCinema
+    SELECT s.id, m.name AS movie, c.name AS cinema, c.image AS image, TIME_FORMAT(s.showtime, "%h:%i%p") AS showtime, s.showtimeDate, c.price, m.id AS idMovie, c.id AS idCinema
     FROM showtimes s 
     INNER JOIN cinemas c on c.id = s.idCinema 
     INNER JOIN movies m on m.id = s.idMovie 
@@ -59,7 +59,7 @@ exports.getShowtimesById = (id) => {
 exports.getShowtime = (id) => {
   return new Promise((resolve, reject) => {
     const query = db.query(`
-    SELECT * FROM showtimes
+    SELECT id, idCinema, idMovie, showtimeDate, TIME_FORMAT(showtime, "%h:%i%p") AS showtime, createdAt, updatedAt FROM showtimes
     WHERE id IN (${id.map(item => `${item}`).join()})
     `, (err, res, field) => {
       if (err) reject(err)
