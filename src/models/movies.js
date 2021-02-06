@@ -18,6 +18,15 @@ exports.getMoviesByCondition = (cond) => {
   })
 }
 
+exports.getAllMovie = () => {
+  return new Promise((resolve, reject) => {
+    db.query('SELECT * FROM movies', (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+  })
+}
+
 exports.getCountMovies = () => {
   return new Promise((resolve, reject) => {
     db.query('SELECT COUNT(*) as total_movies FROM movies', (err, res, field) => {

@@ -4,6 +4,7 @@ const upload = require('../helpers/upload')
 const authMiddleware = require('../middlewares/auth')
 
 routes.get('/', movieControllers.listMovies)
+routes.get('/listAllMovie', movieControllers.listAllMovies)
 routes.get('/movieNowShowing', movieControllers.getMovieNowShowing)
 routes.get('/movieMonth', movieControllers.getMovieMonth)
 routes.get('/:id', movieControllers.detailMovies)
