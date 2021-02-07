@@ -120,14 +120,15 @@ exports.updateCinema = async (req, res) => {
   try {
     const { id } = req.params
     const data = req.body
-    const cinemaData = {
-      name: data.name,
-      image: req.file === undefined ? null : req.file.filename,
-      location: data.location,
-      address: data.address,
-      price: data.price
-    }
     const initialResult = await cinemaModel.getCinemaById(id)
+    const cinemaData = {
+      name: data.name === undefined ? initialResult[0].name : data.name,
+      image: req.file === undefined ? initialResult[0].image : req.file.filename,
+      location: data.location === undefined ? initialResult[0].location : data.location,
+      address: data.address === undefined ? initialResult[0].address : data.address,
+      price: data.price === undefined ? initialResult[0].price : data.price
+    }
+    console.log(cinemaData)
     if (initialResult.length > 0) {
       if (cinemaData.image) {
         fs.unlink(`./uploads/cinemas/${initialResult[0].image}`,
@@ -139,8 +140,8 @@ exports.updateCinema = async (req, res) => {
           }
         )
       }
-      await cinemaModel.updateCinema(id, data)
-      return response(res, 200, true, `Cinema id ${id} updated successfully`, { ...initialResult[0], ...data })
+      await cinemaModel.updateCinema(id, cinemaData)
+      return response(res, 200, true, `Cinema id ${id} updated successfully`, { ...initialResult[0], ...cinemaData })
     } else {
       return response(res, 400, false, `Failed to update cinema id ${id}`)
     }

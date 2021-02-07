@@ -111,3 +111,16 @@ exports.updateGenre = async (req, res) => {
     return response(res, 400, false, 'Bad Request')
   }
 }
+
+exports.listAllGenre = async (req, res) => {
+  try {
+    const results = await genreModel.getAllGenre()
+    console.log(results)
+    if (results.length > 0) {
+      return response(res, 200, true, 'List of Genre', results)
+    }
+    return response(res, 404, false, 'Genre not exists')
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}

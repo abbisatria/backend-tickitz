@@ -85,7 +85,7 @@ exports.updateCinema = (id, data) => {
       if (err) reject(err)
       resolve(res)
     })
-    console.log(query.db)
+    console.log(query.sql)
   })
 }
 

@@ -120,6 +120,19 @@ exports.detailMovies = async (req, res) => {
   }
 }
 
+exports.detailMovieGenre = async (req, res) => {
+  try {
+    const { id } = req.params
+    const results = await movieModel.getMovieGenreById(id)
+    if (results.length > 0) {
+      return response(res, 200, true, 'Details of Movie Genre', results)
+    }
+    return response(res, 404, false, `Movies id ${id} not exists`)
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
 exports.deleteMovie = async (req, res) => {
   try {
     const { id } = req.params
@@ -150,16 +163,6 @@ exports.updateMovie = async (req, res) => {
   try {
     const { id } = req.params
     const { name, releaseDate, category, directed, duration, casts, description } = req.body
-    const data = {
-      name,
-      image: req.file === undefined ? null : req.file.filename,
-      releaseDate,
-      category,
-      directed,
-      duration,
-      casts,
-      description
-    }
     const { idGenre } = req.body
     const selectedGenre = []
     if (typeof idGenre === 'object') {
@@ -182,6 +185,16 @@ exports.updateMovie = async (req, res) => {
       }
     }
     const initialResult = await movieModel.getMovieById(id)
+    const data = {
+      name: name === undefined ? initialResult[0].name : name,
+      image: req.file === undefined ? initialResult[0].image : req.file.filename,
+      releaseDate: releaseDate === undefined ? initialResult[0].releaseDate : releaseDate,
+      category: category === undefined ? initialResult[0].category : category,
+      directed: directed === undefined ? initialResult[0].directed : directed,
+      duration: duration === undefined ? initialResult[0].duration : duration,
+      casts: casts === undefined ? initialResult[0].casts : casts,
+      description: description === undefined ? initialResult[0].description : description
+    }
     if (initialResult.length > 0) {
       if (data.image) {
         fs.unlink(`./uploads/movies/${initialResult[0].image}`,

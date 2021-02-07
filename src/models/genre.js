@@ -14,6 +14,15 @@ exports.getGenreByCondition = (cond) => {
   })
 }
 
+exports.getAllGenre = () => {
+  return new Promise((resolve, reject) => {
+    db.query('SELECT * FROM genre', (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+  })
+}
+
 exports.getCountGenre = () => {
   return new Promise((resolve, reject) => {
     db.query('SELECT COUNT(*) as total_genre FROM genre', (err, res, field) => {

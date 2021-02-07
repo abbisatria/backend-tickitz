@@ -81,6 +81,18 @@ exports.getMovieById = (id) => {
   })
 }
 
+exports.getMovieGenreById = (id) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`
+    SELECT g.id, g.name AS genre FROM movies m INNER JOIN movie_genre mg on m.id = mg.idMovie INNER JOIN genre g on mg.idGenre = g.id WHERE m.id=${id}
+    `, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
+  })
+}
+
 exports.deleteMovieById = (id) => {
   return new Promise((resolve, reject) => {
     const query = db.query(`
