@@ -1,4 +1,5 @@
 const multer = require('multer')
+const path = require('path')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -10,32 +11,29 @@ const storage = multer.diskStorage({
 })
 
 const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === 'image/png' ||
-   file.mimetype === 'image/jpg' ||
-   file.mimetype === 'image/jpeg'
-  ) {
-    cb(null, true)
-  } else {
-    cb(null, false)
+  const ext = path.extname(file.originalname)
+
+  if (ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+    return cb(new Error('Only images are allowed'), 'test')
   }
+  cb(null, true)
 }
 
 const limits = {
   fileSize: 1 * 1024 * 1024
 }
 
-const upload = multer({ storage, limits, fileFilter }).single('image')
+const upload = multer({ storage: storage, limits: limits, fileFilter: fileFilter }).single('image')
 
 const uploadFilter = (req, res, next) => {
   upload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      return res.json({
+      return res.status(400).json({
         success: false,
-        message: 'Error uploading file'
+        message: err.message
       })
     } else if (err) {
-      return res.json({
+      return res.status(400).json({
         success: false,
         message: 'Error uploading file'
       })

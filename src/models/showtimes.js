@@ -148,3 +148,15 @@ exports.deleteShowtimeById = (id) => {
     console.log(query.sql)
   })
 }
+
+exports.getShowtimeByMovie = (id) => {
+  return new Promise((resolve, reject) => {
+    const query = db.query(`
+      SELECT showtimeDate FROM showtimes WHERE idMovie=${id}
+    `, (err, res, field) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+    console.log(query.sql)
+  })
+}

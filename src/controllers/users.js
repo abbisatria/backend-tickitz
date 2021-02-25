@@ -21,12 +21,29 @@ exports.updateUserProfile = async (req, res) => {
     const { id } = req.params
     const { firstname, lastname, phoneNumber, email, password } = req.body
     const initialResult = await userModel.getUsersById(id)
+    console.log(req.file)
     if (initialResult.length > 0) {
+      if (req.file) {
+        if (req.file !== initialResult[0].image) {
+          fs.unlink(`./uploads/users/${initialResult[0].image}`,
+            function (err) {
+              if (err) {
+                console.log('image')
+              }
+              console.log('Image Update Old File deleted!')
+            }
+          )
+        }
+        await userModel.updateUserProfile(id, { image: req.file.filename })
+        return response(res, 200, true, 'Image hash ben updated', {
+          id: initialResult[0].id,
+          image: req.file.filename
+        })
+      }
       const dataProfile = {
         firstname: firstname === undefined ? initialResult[0].firstname : firstname,
         lastname: lastname === undefined ? initialResult[0].lastname : lastname,
-        phoneNumber: phoneNumber === undefined ? initialResult[0].phoneNumber : phoneNumber,
-        image: req.file === undefined ? initialResult[0].image : req.file.filename
+        phoneNumber: phoneNumber === undefined ? initialResult[0].phoneNumber : phoneNumber
       }
       let user
       if (email && password) {
@@ -49,40 +66,19 @@ exports.updateUserProfile = async (req, res) => {
       }
       console.log(user)
       if (user !== undefined) {
-        if (dataProfile.image !== initialResult[0].image) {
-          fs.unlink(`./uploads/users/${initialResult[0].image}`,
-            function (err) {
-              if (err) {
-                console.log('image')
-              }
-              console.log('Image Update Old File deleted!')
-            }
-          )
-        }
         await userModel.updateUser(id, user)
         await userModel.updateUserProfile(id, dataProfile)
-        return response(res, 200, true, `User id ${id} updated successfully`, {
+        return response(res, 200, true, 'Updated successfully', {
           id: initialResult[0].id,
           email: user.email === undefined ? initialResult[0].email : user.email,
           role: initialResult[0].role,
           firstname: dataProfile.firstname,
           lastname: dataProfile.lastname,
-          phoneNumber: dataProfile.phoneNumber,
-          image: dataProfile.image
+          phoneNumber: dataProfile.phoneNumber
         })
       } else {
-        if (dataProfile.image !== initialResult[0].image) {
-          fs.unlink(`./uploads/users/${initialResult[0].image}`,
-            function (err) {
-              if (err) {
-                console.log('image')
-              }
-              console.log('Image Update Old File deleted!')
-            }
-          )
-        }
         await userModel.updateUserProfile(id, dataProfile)
-        return response(res, 200, true, `User id ${id} updated successfully`, {
+        return response(res, 200, true, 'Updated successfully', {
           id: initialResult[0].id,
           email: initialResult[0].email,
           role: initialResult[0].role,
@@ -93,7 +89,7 @@ exports.updateUserProfile = async (req, res) => {
         })
       }
     } else {
-      return response(res, 200, false, `Failed to update user id ${id}`)
+      return response(res, 200, false, 'Failed to update')
     }
   } catch (error) {
     console.log(error)

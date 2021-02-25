@@ -2,7 +2,7 @@ const db = require('../helpers/db')
 
 exports.getMoviesByCondition = (cond) => {
   return new Promise((resolve, reject) => {
-    db.query(`
+    const query = db.query(`
     SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
     FROM movies m 
     LEFT JOIN movie_genre mg on m.id = mg.idMovie 
@@ -15,6 +15,7 @@ exports.getMoviesByCondition = (cond) => {
       if (err) reject(err)
       resolve(res)
     })
+    console.log(query.sql)
   })
 }
 
@@ -27,20 +28,10 @@ exports.getAllMovie = () => {
   })
 }
 
-exports.getCountMovies = () => {
+exports.getCountMovieCondition = (cond, status) => {
   return new Promise((resolve, reject) => {
-    db.query('SELECT COUNT(*) as total_movies FROM movies', (err, res, field) => {
-      if (err) reject(err)
-      resolve(res[0].total_movies)
-    })
-  })
-}
-
-exports.getCountMovieCondition = (cond) => {
-  return new Promise((resolve, reject) => {
-    const query = db.query(`SELECT COUNT(name) as totalData FROM
-    movies WHERE name LIKE "%${cond.search}%"
-    GROUP BY name
+    const query = db.query(`SELECT COUNT(*) as totalData FROM
+    movies WHERE name LIKE "%${cond.search}%" ${status ? `AND status = '${status}'` : ''}
     ORDER BY ${cond.sort} ${cond.order}`, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
@@ -120,11 +111,18 @@ exports.updateMovie = (id, data) => {
   })
 }
 
-exports.getMovieShow = () => {
+exports.getMovieShow = (cond) => {
   return new Promise((resolve, reject) => {
-    db.query(`SELECT m.* FROM movies m
-    INNER JOIN showtimes s ON m.id = s.idMovie`,
-    (err, res, field) => {
+    db.query(`
+    SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
+    FROM movies m 
+    LEFT JOIN movie_genre mg on m.id = mg.idMovie 
+    LEFT JOIN genre g on mg.idGenre = g.id 
+    WHERE m.name LIKE "%${cond.search}%" AND m.status = 'nowShowing'
+    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
+    ORDER BY ${cond.sort} ${cond.order}
+    LIMIT ${cond.limit} OFFSET ${cond.offset}
+    `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
     })
@@ -148,14 +146,18 @@ exports.getMovieShowById = (id) => {
   })
 }
 
-exports.getMovieUpComing = () => {
+exports.getMovieUpComing = (cond) => {
   return new Promise((resolve, reject) => {
-    db.query(`SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
+    db.query(`
+    SELECT m.*, GROUP_CONCAT(DISTINCT g.name ORDER BY g.name DESC SEPARATOR ', ') AS genre 
     FROM movies m 
     LEFT JOIN movie_genre mg on m.id = mg.idMovie 
     LEFT JOIN genre g on mg.idGenre = g.id 
-    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt`,
-    (err, res, field) => {
+    WHERE m.name LIKE "%${cond.search}%" AND m.status = 'upComing'  ${cond.month ? `AND MONTH(m.releaseDate) = ${cond.month}` : ''}
+    GROUP BY m.id, m.name, m.image, m.releaseDate, m.category, m.directed, m.duration, m.casts, m.description, m.createdAt, m.updatedAt
+    ORDER BY ${cond.sort} ${cond.order}
+    LIMIT ${cond.limit} OFFSET ${cond.offset}
+    `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)
     })

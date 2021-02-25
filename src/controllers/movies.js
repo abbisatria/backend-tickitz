@@ -19,16 +19,8 @@ exports.listMovies = async (req, res) => {
 
     const results = await movieModel.getMoviesByCondition(cond)
 
-    let totalPage
-    let totalData
-
-    if (cond.search) {
-      totalData = await movieModel.getCountMovieCondition(cond)
-      totalPage = Math.ceil(Number(totalData.length) / cond.limit)
-    } else {
-      totalData = await movieModel.getCountMovies()
-      totalPage = Math.ceil(Number(totalData) / cond.limit)
-    }
+    const totalData = await movieModel.getCountMovieCondition(cond)
+    const totalPage = Math.ceil(Number(totalData[0].totalData) / cond.limit)
 
     return response(
       res,
@@ -45,6 +37,7 @@ exports.listMovies = async (req, res) => {
       }
     )
   } catch (error) {
+    console.log(error)
     return response(res, 400, false, 'Bad Request')
   }
 }
@@ -90,7 +83,15 @@ exports.createMovies = async (req, res) => {
         })
       }
     }
-    const initialResult = await movieModel.createMovies(data)
+    const date = new Date()
+    let initialResult
+    const splitReleaseDate = data.releaseDate.split('-')
+    // console.log(Number(split[1]) > 4)
+    if ((Number(splitReleaseDate[1])) > (date.getMonth() + 1)) {
+      initialResult = await movieModel.createMovies({ ...data, status: 'upComing' })
+    } else {
+      initialResult = await movieModel.createMovies(data)
+    }
     if (initialResult.affectedRows > 0) {
       if (selectedGenre.length > 0) {
         await movieGenreModel.createMoviesGenre(initialResult.insertId, selectedGenre)
@@ -241,15 +242,34 @@ exports.updateMovie = async (req, res) => {
 
 exports.getMovieMonth = async (req, res) => {
   try {
-    const results = await movieModel.getMovieUpComing()
-    if (results.length > 0) {
-      const date = new Date()
-      const finalResults = results.filter(item => {
-        return (item.releaseDate.getMonth() + 1) > (date.getMonth() + 1)
-      })
-      return response(res, 200, true, 'List of Movie Upcoming', finalResults)
-    }
-    return response(res, 404, false, 'Movie not exists')
+    const cond = req.query
+    cond.search = cond.search || ''
+    cond.page = Number(cond.page) || 1
+    cond.limit = Number(cond.limit) || 5
+    cond.offset = (cond.page * cond.limit) - cond.limit
+    cond.sort = cond.sort || 'id'
+    cond.order = cond.order || 'ASC'
+
+    const results = await movieModel.getMovieUpComing(cond)
+    const status = 'upComing'
+
+    const totalData = await movieModel.getCountMovieCondition(cond, status)
+    const totalPage = Math.ceil(Number(totalData[0].totalData) / cond.limit)
+
+    return response(
+      res,
+      200,
+      true,
+      'List of Up Coming Movies',
+      results,
+      {
+        totalData: results.length,
+        currentPage: cond.page,
+        totalPage,
+        nextLink: cond.page < totalPage ? `${APP_URL}movies/upComing?${qs.stringify({ ...req.query, ...{ page: cond.page + 1 } })}` : null,
+        prevLink: cond.page > 1 ? `${APP_URL}movies/upComing?${qs.stringify({ ...req.query, ...{ page: cond.page - 1 } })}` : null
+      }
+    )
   } catch (error) {
     return response(res, 400, false, 'Bad Request')
   }
@@ -257,14 +277,34 @@ exports.getMovieMonth = async (req, res) => {
 
 exports.getMovieNowShowing = async (req, res) => {
   try {
-    const results = await movieModel.getMovieShow()
-    if (results.length > 0) {
-      const mapIdMovie = results.map(item => item.id)
-      const finalResults = await movieModel.getMovieShowById([...new Set(mapIdMovie)])
+    const cond = req.query
+    cond.search = cond.search || ''
+    cond.page = Number(cond.page) || 1
+    cond.limit = Number(cond.limit) || 5
+    cond.offset = (cond.page * cond.limit) - cond.limit
+    cond.sort = cond.sort || 'id'
+    cond.order = cond.order || 'ASC'
 
-      return response(res, 200, true, 'List of Movie Now Showing', finalResults)
-    }
-    return response(res, 404, false, 'Movie not exists')
+    const results = await movieModel.getMovieShow(cond)
+    const status = 'nowShowing'
+
+    const totalData = await movieModel.getCountMovieCondition(cond, status)
+    const totalPage = Math.ceil(Number(totalData[0].totalData) / cond.limit)
+
+    return response(
+      res,
+      200,
+      true,
+      'List of Now Showing Movies',
+      results,
+      {
+        totalData: results.length,
+        currentPage: cond.page,
+        totalPage,
+        nextLink: cond.page < totalPage ? `${APP_URL}movies/movieNowShowing?${qs.stringify({ ...req.query, ...{ page: cond.page + 1 } })}` : null,
+        prevLink: cond.page > 1 ? `${APP_URL}movies/movieNowShowing?${qs.stringify({ ...req.query, ...{ page: cond.page - 1 } })}` : null
+      }
+    )
   } catch (error) {
     return response(res, 400, false, 'Bad Request')
   }

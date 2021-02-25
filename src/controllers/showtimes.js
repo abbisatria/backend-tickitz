@@ -1,6 +1,8 @@
 const showtimeModel = require('../models/showtimes')
+const movieModel = require('../models/movies')
 const validation = require('../helpers/validation')
 const response = require('../helpers/response')
+const moment = require('moment')
 
 exports.createShowtime = async (req, res) => {
   const valid = validation.validationShowtime(req.body)
@@ -31,6 +33,7 @@ exports.createShowtime = async (req, res) => {
     if (typeof selectedCinema === 'string' && typeof selectedShowtime === 'string') {
       await showtimeModel.createCinemaShowtimes([selectedCinema], showtimeData.idMovie, [selectedShowtime], showtimeData.showtimeDate)
     }
+    await movieModel.updateMovie(showtimeData.idMovie, { status: 'nowShowing' })
     const finalResult = await showtimeModel.getShowtimeWithCinemaAndMovie(showtimeData.idMovie)
     if (finalResult.length > 0) {
       return response(res, 200, true, 'Create data success', {
@@ -146,6 +149,21 @@ exports.deleteShowtime = async (req, res) => {
       }
     }
     return response(res, 400, false, `Failed to delete showtime id ${id}`)
+  } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.listShowtimeByMovie = async (req, res) => {
+  try {
+    const { id } = req.params
+    const results = await showtimeModel.getShowtimeByMovie(Number(id))
+    if (results.length > 0) {
+      const mapResults = results.map(item => moment(item.showtimeDate).format('YYYY-MM-DD'))
+      const finalResults = [...new Set(mapResults)]
+      return response(res, 200, true, 'List of Showtime', finalResults)
+    }
+    return response(res, 404, false, 'Showtime Not Found')
   } catch (error) {
     return response(res, 400, false, 'Bad Request')
   }
