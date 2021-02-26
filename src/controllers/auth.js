@@ -84,14 +84,30 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
     const existingUser = await userModel.getUsersByCondition({ email })
-    const id = existingUser[0].id
-    const token = jwt.sign({ id }, APP_KEY)
     if (existingUser.length > 0) {
+      const id = existingUser[0].id
+      const token = jwt.sign({ id }, APP_KEY)
       sendEmail(existingUser[0].id, `http://localhost:3000/forgot-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
       return response(res, 200, true, 'Please check email to reset password!')
     }
     return response(res, 401, false, 'Email not registered')
   } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.forgotPasswordMobile = async (req, res) => {
+  try {
+    const { email } = req.body
+    const existingUser = await userModel.getUsersByCondition({ email })
+    if (existingUser.length > 0) {
+      const id = existingUser[0].id
+      const token = jwt.sign({ id }, APP_KEY)
+      return response(res, 200, true, 'Please to reset password!', token)
+    }
+    return response(res, 401, false, 'Email not registered')
+  } catch (error) {
+    console.log(error)
     return response(res, 400, false, 'Bad Request')
   }
 }
