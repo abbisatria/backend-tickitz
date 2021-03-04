@@ -21,7 +21,6 @@ exports.updateUserProfile = async (req, res) => {
     const { id } = req.params
     const { firstname, lastname, phoneNumber, email, password } = req.body
     const initialResult = await userModel.getUsersById(id)
-    console.log(req.file)
     if (initialResult.length > 0) {
       if (req.file) {
         if (req.file !== initialResult[0].image) {
@@ -89,7 +88,34 @@ exports.updateUserProfile = async (req, res) => {
         })
       }
     } else {
-      return response(res, 200, false, 'Failed to update')
+      return response(res, 400, false, 'Failed to update')
+    }
+  } catch (error) {
+    console.log(error)
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.deletePhotoProfile = async (req, res) => {
+  try {
+    const { id } = req.params
+    const initialResult = await userModel.getUsersById(id)
+    if (initialResult.length > 0) {
+      await userModel.updateUserProfile(id, { image: null })
+      fs.unlink(`./uploads/users/${initialResult[0].image}`,
+        function (err) {
+          if (err) {
+            console.log('image')
+          }
+          console.log('Image Update Old File deleted!')
+        }
+      )
+      return response(res, 200, true, 'Image hash ben deleted', {
+        id: initialResult[0].id,
+        image: null
+      })
+    } else {
+      return response(res, 400, false, 'Failed to update')
     }
   } catch (error) {
     console.log(error)

@@ -4,7 +4,7 @@ const validation = require('../helpers/validation')
 const sendEmail = require('../helpers/sendEmail')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { APP_KEY, APP_URL } = process.env
+const { APP_KEY, APP_URL, CLIENT_URL } = process.env
 
 exports.login = async (req, res) => {
   const valid = validation.validationUser(req.body)
@@ -72,7 +72,7 @@ exports.verificationEmail = async (req, res) => {
     if (id) {
       const update = await userModel.updateStatusUser(id)
       console.log(update)
-      return res.redirect('http://localhost:3000/sign-in')
+      return res.redirect(`${CLIENT_URL}/sign-in`)
     }
     return response(res, 400, false, 'Failed email verification')
   } catch (error) {
@@ -87,7 +87,7 @@ exports.forgotPassword = async (req, res) => {
     if (existingUser.length > 0) {
       const id = existingUser[0].id
       const token = jwt.sign({ id }, APP_KEY)
-      sendEmail(existingUser[0].id, `http://localhost:3000/forgot-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      sendEmail(existingUser[0].id, `${CLIENT_URL}forgot-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
       return response(res, 200, true, 'Please check email to reset password!')
     }
     return response(res, 401, false, 'Email not registered')

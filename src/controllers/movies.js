@@ -1,9 +1,10 @@
-const { APP_URL } = process.env
+const { APP_URL, CLIENT_URL } = process.env
 const movieModel = require('../models/movies')
 const genreModel = require('../models/genre')
 const movieGenreModel = require('../models/movieGenres')
 const validation = require('../helpers/validation')
 const response = require('../helpers/response')
+const sendEmail = require('../helpers/sendEmailSubscribe')
 const qs = require('querystring')
 const fs = require('fs')
 
@@ -98,6 +99,7 @@ exports.createMovies = async (req, res) => {
       }
       const finalResult = await movieModel.getMovieById(initialResult.insertId)
       if (finalResult.length > 0) {
+        sendEmail(CLIENT_URL, 'Latest Movies', "Tickitz released the latest movie, don't miss it !!")
         return response(res, 200, true, 'Movie successfully created', finalResult[0])
       }
       return response(res, 400, false, 'Failed to create Movie')
@@ -306,6 +308,7 @@ exports.getMovieNowShowing = async (req, res) => {
       }
     )
   } catch (error) {
+    console.log(error)
     return response(res, 400, false, 'Bad Request')
   }
 }
